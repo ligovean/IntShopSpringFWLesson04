@@ -11,10 +11,12 @@ import java.util.List;
 public class ShoppingCart {
     private List<OrderItem> items;
     private Double totalCost;
+    private int totalQty;
 
     public ShoppingCart() {
         items = new ArrayList<>();
         totalCost = 0.0;
+        totalQty = 0;
     }
 
     public void add(Product product) {
@@ -41,6 +43,12 @@ public class ShoppingCart {
         recalculate();
     }
 
+    public int getTotalQty() {
+        return totalQty;
+    }
+
+
+
     public void remove(Product product) {
         OrderItem orderItem = findOrderFromProduct(product);
         if (orderItem == null) {
@@ -52,13 +60,24 @@ public class ShoppingCart {
 
     private void recalculate() {
         totalCost = 0.0;
+        totalQty =0;
         for (OrderItem o : items) {
             o.setTotalPrice(o.getQuantity() * o.getProduct().getPrice());
             totalCost += o.getTotalPrice();
+            totalQty += o.getQuantity();
         }
     }
 
     private OrderItem findOrderFromProduct(Product product) {
         return items.stream().filter(o -> o.getProduct().getId().equals(product.getId())).findFirst().orElse(null);
     }
+
+    public long getQtyByProductId(Long id){
+        return items.stream().filter(o -> o.getProduct().getId().equals(id)).findFirst().orElse(null).getQuantity();
+    }
+
+    public String getNameByProductId(Long id){
+        return items.stream().filter(o -> o.getProduct().getId().equals(id)).findFirst().orElse(null).getProduct().getTitle();
+    }
+
 }

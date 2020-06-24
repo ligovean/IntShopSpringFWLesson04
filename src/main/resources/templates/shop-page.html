@@ -19,9 +19,10 @@
 
 <div class="container">
     <br>
-    <button id="connect" onclick="connect();">Connect</button>
+<!--    <button id="connect" onclick="connect();">Connect</button>-->
     <!--<button id="sendName" onclick="sendName();">Send</button>-->
-    <input id="resultInput" type="text" size="40">
+    <input id="resultInput" type="text" size="80">
+    <input id="resultQty" type="text" size="40">
 
     <h1 th:text="Фильтры" />
 
@@ -46,11 +47,12 @@
             <th>Название товара</th>
             <th>Цена</th>
             <th></th>
+            <th></th>
         </tr>
         </thead>
         <tbody>
 
-        <tr th:each="product,iterStat : ${products}">
+        <tr th:each="product,iterStat : ${products}" id="tableCart" >
 
             <td th:text="${iterStat.index}"/>
             <td th:text="${product.id}"/>
@@ -62,6 +64,11 @@
             <td>
                 <a th:href="@{'/shop/cart/add/' + ${product.id}}" class="btn btn-primary" onclick="sendName()">Добавить в корзину</a>
             </td>
+
+            <td>
+                <label th:id="'myProd' + ${product.id}" type="text" size="40"/>
+            </td>
+
         </tr>
         </tbody>
     </table>
