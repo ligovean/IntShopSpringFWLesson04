@@ -1,10 +1,12 @@
 package com.geekbrains.geekmarketwinter.controllers;
 
+import com.geekbrains.geekmarketwinter.entites.Greeting;
 import com.geekbrains.geekmarketwinter.entites.Order;
 import com.geekbrains.geekmarketwinter.entites.Product;
 import com.geekbrains.geekmarketwinter.entites.User;
 import com.geekbrains.geekmarketwinter.repositories.specifications.ProductSpecs;
 import com.geekbrains.geekmarketwinter.services.*;
+import com.geekbrains.geekmarketwinter.utils.ShoppingCart;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,6 +31,7 @@ public class ShopController {
     private ProductService productService;
     private ShoppingCartService shoppingCartService;
     private DeliveryAddressService deliverAddressService;
+    private ShopControllerWs controllerWs;
 
     @Autowired
     public void setProductService(ProductService productService) {
@@ -60,12 +63,18 @@ public class ShopController {
         this.mailService = mailService;
     }
 
+    @Autowired
+    public void setControllerWs(ShopControllerWs controllerWs) {
+        this.controllerWs = controllerWs;
+    }
+
     @GetMapping
     public String shopPage(Model model,
                            @RequestParam(value = "page") Optional<Integer> page,
                            @RequestParam(value = "word", required = false) String word,
                            @RequestParam(value = "min", required = false) Double min,
-                           @RequestParam(value = "max", required = false) Double max
+                           @RequestParam(value = "max", required = false) Double max,
+                           HttpServletRequest httpServletRequest
     ) {
         final int currentPage = (page.orElse(0) < 1) ? INITIAL_PAGE : page.get() - 1;
 
@@ -87,6 +96,7 @@ public class ShopController {
         Page<Product> products = productService.getProductsWithPagingAndFiltering(currentPage, PAGE_SIZE, spec);
 
         model.addAttribute("products", products.getContent());
+
         model.addAttribute("page", currentPage);
         model.addAttribute("totalPage", products.getTotalPages());
 
@@ -101,6 +111,25 @@ public class ShopController {
     @GetMapping("/cart/add/{id}")
     public String addProductToCart(Model model, @PathVariable("id") Long id, HttpServletRequest httpServletRequest) {
         shoppingCartService.addToCart(httpServletRequest.getSession(), id);
+
+        ShoppingCart cart = (ShoppingCart) httpServletRequest.getSession().getAttribute("cart");
+        String qty = String.valueOf(cart.getTotalQty());
+        String curQty = String.valueOf(cart.getQtyByProductId(id));
+        String name = String.valueOf(cart.getNameByProductId(id));
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(700);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                controllerWs.sendMessage("/topic/greetings", new Greeting(name + " добавлен в корзину!",qty,curQty,String.valueOf(id)));
+            }
+        }).start();
+
+
         String referrer = httpServletRequest.getHeader("referer");
         return "redirect:" + referrer;
     }
